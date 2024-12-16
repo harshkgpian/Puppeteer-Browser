@@ -17,23 +17,32 @@ app.get('/', (req, res) => {
 // Handle automation requests
 app.post('/automate', async (req, res) => {
     try {
-        const browser = await puppeteer.launch({ headless: false }); // Set headless: false to see the browser
+        // Modified puppeteer launch configuration for deployment
+        const browser = await puppeteer.launch({
+            headless: false,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu'
+            ]
+        });
         const page = await browser.newPage();
         await page.goto('https://www.google.com');
         
-        // Wait a few seconds before closing (optional)
         await new Promise(resolve => setTimeout(resolve, 5000));
         
         await browser.close();
         res.json({ message: 'Successfully opened Google!' });
     } catch (error) {
+        console.error('Automation error:', error);
         res.status(500).json({ message: 'Error: ' + error.message });
     }
 });
 
-// Start server
-const PORT = 3000;
+// Use environment port or default to 3000
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log(`Website available at: http://localhost:${PORT}`);
 });
